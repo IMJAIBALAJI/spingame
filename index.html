@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spin & Dare Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-cyan-400 via-purple-500 to-pink-500 min-h-screen flex flex-col items-center justify-center p-4 font-['Inter']">
+    <div class="w-full max-w-md bg-white bg-opacity-95 backdrop-blur-xl rounded-3xl shadow-2xl p-6 relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-r from-cyan-200 to-pink-200 opacity-30 animate-pulse"></div>
+        <h1 class="text-4xl font-bold text-center text-cyan-900 mb-6 font-['Playfair_Display'] relative z-10">Spin & Dare 🎉</h1>
+
+        <!-- Spin Board -->
+        <div class="relative flex justify-center mb-8">
+            <div id="wheel" class="w-72 h-72 relative">
+                <svg viewBox="0 0 100 100" class="w-full h-full">
+                    <circle cx="50" cy="50" r="50" fill="none" stroke="#fff" stroke-width="3"/>
+                    <g id="segments">
+                        <!-- Dynamically populated -->
+                    </g>
+                    <circle cx="50" cy="50" r="6" fill="#fff"/>
+                    <polygon points="50,0 48,12 52,12" fill="#FFD700" class="absolute" style="transform-origin: 50px 50px;" id="needle"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Spin Button -->
+        <button id="spinButton" class="w-full bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white font-semibold py-3 rounded-lg mb-6 transition duration-300 transform hover:scale-105 relative z-10">Spin It! 🌟</button>
+
+        <!-- Task Table -->
+        <div class="overflow-x-auto relative z-10 max-h-96">
+            <table class="w-full text-left text-sm">
+                <thead>
+                    <tr class="bg-gradient-to-r from-cyan-100 to-purple-100 sticky top-0">
+                        <th class="p-3 font-semibold text-cyan-900">Number</th>
+                        <th class="p-3 font-semibold text-cyan-900">Task/Question</th>
+                    </tr>
+                </thead>
+                <tbody id="taskTable"></tbody>
+            </table>
+        </div>
+
+        <!-- Result Display -->
+        <div id="resultDisplay" class="hidden fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div id="resultText" class="bg-white p-6 rounded-2xl text-center text-2xl font-semibold text-cyan-900 transform scale-0 font-['Playfair_Display']"></div>
+        </div>
+    </div>
+
+    <script>
+        const segments = 8;
+        const tasks = [
+            { id: 1, text: "Truth: What's the most embarrassing thing you've done? 😳", emoji: "😳" },
+            { id: 2, text: "Dare: Kiss the friend on your left! 💋", emoji: "💋" },
+            { id: 3, text: "Share your happiest moment in life! 😊", emoji: "😊" },
+            { id: 4, text: "Dare: Hug your friend tightly for 10 seconds! 🤗", emoji: "🤗" },
+            { id: 5, text: "Truth: What's a secret you've never told anyone? 🤫", emoji: "🤫" },
+            { id: 6, text: "Spin Again! 🔄", emoji: "🔄" },
+            { id: 7, text: "Dare: Chosen by the 3rd person to your left! 🎭", emoji: "🎭" },
+            { id: 8, text: "Dare: Chosen by the 3rd person to your right! 🎭", emoji: "🎭" },
+            { id: 9, text: "Share a sad moment you overcame. 😢", emoji: "😢" },
+            { id: 10, text: "What's your biggest life wish? 🌟", emoji: "🌟" },
+            { id: 11, text: "Skip this question! 🙈", emoji: "🙈" },
+            { id: 12, text: "Dare: Sing a song loudly! 🎤", emoji: "🎤" },
+            { id: 13, text: "What's your wildest fantasy? ✨", emoji: "✨" },
+            { id: 14, text: "Spin Twice Again! 🔄🔄", emoji: "🔄" },
+            { id: 15, text: "Dare: Dance like nobody's watching for 30 seconds! 💃", emoji: "💃" },
+            { id: 16, text: "Dare: Dance without music for 20 seconds! 🕺", emoji: "🕺" },
+            { id: 17, text: "Dare: Dance with a random object as your partner! 🧹", emoji: "🧹" },
+            { id: 18, text: "Dare: Act like 5 different animals! 🦒", emoji: "🦒" },
+            { id: 19, text: "Dare: Imitate another player for 30 seconds! 😜", emoji: "😜" },
+            { id: 20, text: "Truth: What's the weirdest food combo you've tried? 🍔", emoji: "🍔" },
+            { id: 21, text: "Dare: Tell a joke and make everyone laugh! 😂", emoji: "😂" },
+            { id: 22, text: "Truth: What's your biggest fear? 😱", emoji: "😱" },
+            { id: 23, text: "Dare: Wear socks on your hands for the next round! 🧦", emoji: "🧦" },
+            { id: 24, text: "Truth: Who do you have a crush on right now? 😘", emoji: "😘" },
+            { id: 25, text: "Dare: Speak in an accent for the next 3 questions! 🇬🇧", emoji: "🇬🇧" },
+            { id: 26, text: "Truth: What's the most childish thing you still do? 🍼", emoji: "🍼" },
+            { id: 27, text: "Dare: Swap seats with someone! 💺", emoji: "💺" },
+            { id: 28, text: "Truth: What's your guilty pleasure? 🍫", emoji: "🍫" },
+            { id: 29, text: "Dare: Do 10 push-ups right now! 💪", emoji: "💪" },
+            { id: 30, text: "Truth: What's the last lie you told? 🤥", emoji: "🤥" },
+            { id: 31, text: "Dare: Hold an ice cube until it melts! 🧊", emoji: "🧊" },
+            { id: 32, text: "Truth: What's your worst habit? 😬", emoji: "😬" },
+            { id: 33, text: "Dare: Post an embarrassing photo online! 📸", emoji: "📸" },
+            { id: 34, text: "Truth: What's the most trouble you've been in? 😈", emoji: "😈" },
+            { id: 35, text: "Dare: Smell someone's shoe! 👟", emoji: "👟" },
+            { id: 36, text: "Truth: What's your dream job? 💼", emoji: "💼" },
+            { id: 37, text: "Dare: Make up a short rap about the group! 🎵", emoji: "🎵" },
+            { id: 38, text: "Truth: What's the most awkward date you've been on? 😅", emoji: "😅" },
+            { id: 39, text: "Dare: Wear a silly hat for the next round! 🎩", emoji: "🎩" },
+            { id: 40, text: "Truth: What's something you regret doing? 😔", emoji: "😔" },
+            { id: 41, text: "Dare: Call a random contact and sing to them! 📞", emoji: "📞" },
+            { id: 42, text: "Truth: What's your biggest pet peeve? 😣", emoji: "😣" },
+            { id: 43, text: "Dare: Let someone tickle you for 10 seconds! 😹", emoji: "😹" },
+            { id: 44, text: "Truth: What's the strangest place you've fallen asleep? 😴", emoji: "😴" },
+            { id: 45, text: "Dare: Do a cartwheel or try to! 🤸", emoji: "🤸" },
+            { id: 46, text: "Truth: What's your most embarrassing nickname? 😆", emoji: "😆" },
+            { id: 47, text: "Dare: Eat a spoonful of a condiment! 🥄", emoji: "🥄" },
+            { id: 48, text: "Truth: What's the worst gift you've received? 🎁", emoji: "🎁" },
+            { id: 49, text: "Dare: Imitate a celebrity! 🌟", emoji: "🌟" },
+            { id: 50, text: "Truth: What's the most daring thing you've done? 🦸", emoji: "🦸" },
+            { id: 51, text: "Dare: Speak in slow motion for the next question! 🐢", emoji: "🐢" },
+            { id: 52, text: "Truth: What's your favorite thing about yourself? 😊", emoji: "😊" },
+            { id: 53, text: "Dare: Try to juggle 3 items! 🤹", emoji: "🤹" },
+            { id: 54, text: "Truth: What's the weirdest smell you like? 👃", emoji: "👃" },
+            { id: 55, text: "Dare: Do a dramatic movie scene reenactment! 🎬", emoji: "🎬" },
+            { id: 56, text: "Truth: What's the silliest thing you're scared of? 😨", emoji: "😨" },
+            { id: 57, text: "Dare: Wear your shirt inside out for the next round! 👕", emoji: "👕" },
+            { id: 58, text: "Truth: What's the most ridiculous thing you've bought? 🛍️", emoji: "🛍️" },
+            { id: 59, text: "Dare: Make animal noises for 15 seconds! 🐷", emoji: "🐷" },
+            { id: 60, text: "Truth: What's the last thing you googled? 🔍", emoji: "🔍" },
+            { id: 61, text: "Dare: Give someone a piggyback ride! 🏋️", emoji: "🏋️" },
+            { id: 62, text: "Truth: What's your favorite song to sing in the shower? 🚿", emoji: "🚿" },
+            { id: 63, text: "Dare: Hold a plank for 20 seconds! 🏋️‍♀️", emoji: "🏋️‍♀️" },
+            { id: 64, text: "Truth: What's the most embarrassing thing in your room? 🛏️", emoji: "🛏️" },
+            { id: 65, text: "Dare: Draw a mustache on your face with a marker! 🖌️", emoji: "🖌️" },
+            { id: 66, text: "Truth: What's the worst movie you've seen? 🎥", emoji: "🎥" },
+            { id: 67, text: "Dare: Speak in rhymes for the next question! 📜", emoji: "📜" },
+            { id: 68, text: "Truth: What's the most annoying thing your friend does? 😤", emoji: "😤" },
+            { id: 69, text: "Dare: Let someone style your hair! 💇", emoji: "💇" },
+            { id: 70, text: "Truth: What's the weirdest thing you've ever done alone? 🤪", emoji: "🤪" },
+            { id: 71, text: "Dare: Tell a story using only sound effects! 🔊", emoji: "🔊" },
+            { id: 72, text: "Truth: What's the funniest thing that's happened to you? 😹", emoji: "😹" },
+            { id: 73, text: "Dare: Pretend to be a robot for 30 seconds! 🤖", emoji: "🤖" },
+            { id: 74, text: "Truth: What's the most useless talent you have? 🎭", emoji: "🎭" },
+            { id: 75, text: "Dare: Make up a handshake with someone! 🤝", emoji: "🤝" },
+            { id: 76, text: "Truth: What's the worst date idea you can think of? 😖", emoji: "😖" },
+            { id: 77, text: "Dare: Try to touch your nose with your tongue! 😝", emoji: "😝" },
+            { id: 78, text: "Truth: What's the most random thing you know? 📚", emoji: "📚" },
+            { id: 79, text: "Dare: Do a runway walk! 👠", emoji: "👠" },
+            { id: 80, text: "Truth: What's the most adventurous thing you want to do? 🗺️", emoji: "🗺️" },
+            { id: 81, text: "Dare: Whisper a secret to the person on your right! 🤫", emoji: "🤫" },
+            { id: 82, text: "Truth: What's the most memorable dream you've had? 💤", emoji: "💤" },
+            { id: 83, text: "Dare: Act like you're in a commercial! 📺", emoji: "📺" },
+            { id: 84, text: "Truth: What's the weirdest thing you've laughed at? 😂", emoji: "😂" },
+            { id: 85, text: "Dare: Spin around 10 times and walk straight! 🌀", emoji: "🌀" },
+            { id: 86, text: "Truth: What's the strangest food you've smelled? 🍽️", emoji: "🍽️" },
+            { id: 87, text: "Dare: Pretend to be a chef and 'cook' something! 👨‍🍳", emoji: "👨‍🍳" },
+            { id: 88, text: "Truth: What's the most spontaneous thing you've done? ⚡", emoji: "⚡" },
+            { id: 89, text: "Dare: Teach everyone a dance move! 💃", emoji: "💃" },
+            { id: 90, text: "Truth: What's the oddest place you've been to? 🏰", emoji: "🏰" },
+            { id: 91, text: "Dare: Make a funny face for a selfie! 📸", emoji: "📸" },
+            { id: 92, text: "Truth: What's the silliest argument you've had? 😅", emoji: "😅" },
+            { id: 93, text: "Dare: Pretend to be a superhero for 30 seconds! 🦸", emoji: "🦸" },
+            { id: 94, text: "Truth: What's the most useless fact you know? 🤓", emoji: "🤓" },
+            { id: 95, text: "Dare: Do a dramatic hair flip! 💁", emoji: "💁" },
+            { id: 96, text: "Truth: What's the weirdest thing you've wanted to try? 🤔", emoji: "🤔" },
+            { id: 97, text: "Dare: Act like a baby for 15 seconds! 👶", emoji: "👶" },
+            { id: 98, text: "Truth: What's the most random gift you've given? 🎁", emoji: "🎁" },
+            { id: 99, text: "Dare: Make up a cheer for the group! 📣", emoji: "📣" },
+            { id: 100, text: "Truth: What's the funniest thing you believed as a kid? 😄", emoji: "😄" }
+        ];
+        let usedTasks = [];
+        let currentTasks = tasks.slice(0, segments);
+        let isSpinning = false;
+
+        // Generate Wheel Segments
+        const segmentGroup = document.getElementById('segments');
+        const colors = ['#06B6D4', '#EC4899', '#F59E0B', '#10B981', '#8B5CF6', '#F472B6', '#14B8A6', '#D946EF'];
+        const segmentLabels = [1, 2, 3, 4, 5, "Spin Again", 7, "Spin Twice"];
+        for (let i = 0; i < segments; i++) {
+            const angle = (i * 360) / segments;
+            const segment = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            segment.setAttribute('d', describeArc(50, 50, 50, angle, angle + 360 / segments));
+            segment.setAttribute('fill', colors[i]);
+            segmentGroup.appendChild(segment);
+
+            const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            const midAngle = angle + 180 / segments;
+            const radius = 35;
+            const x = 50 + radius * Math.cos((midAngle - 90) * Math.PI / 180);
+            const y = 50 + radius * Math.sin((midAngle - 90) * Math.PI / 180);
+            text.setAttribute('x', x);
+            text.setAttribute('y', y);
+            text.setAttribute('fill', '#FFFFFF');
+            text.setAttribute('font-size', '6');
+            text.setAttribute('font-weight', '700');
+            text.setAttribute('text-anchor', 'middle');
+            text.setAttribute('dominant-baseline', 'middle');
+            let rotationAngle = midAngle;
+            if (segmentLabels[i] === "Spin Again" || segmentLabels[i] === "Spin Twice") {
+                rotationAngle += 180;
+            }
+            text.setAttribute('transform', `rotate(${rotationAngle}, ${x}, ${y})`);
+            text.textContent = segmentLabels[i];
+            segmentGroup.appendChild(text);
+        }
+
+        // Update Task Table
+        function updateTaskTable() {
+            const tableBody = document.getElementById('taskTable');
+            tableBody.innerHTML = '';
+            tasks.forEach((task, index) => {
+                const row = document.createElement('tr');
+                row.className = `border-b hover:bg-${colors[index % colors.length]}-100 transition-colors`;
+                row.innerHTML = `
+                    <td class="p-3 text-cyan-800 font-semibold">${task.id}</td>
+                    <td class="p-3 text-gray-900">${task.text}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        updateTaskTable();
+
+        // Spin Logic
+        document.getElementById('spinButton').addEventListener('click', () => {
+            if (isSpinning) return;
+            isSpinning = true;
+            document.getElementById('spinButton').disabled = true;
+
+            const randomAngle = Math.floor(Math.random() * 360) + 720;
+            anime({
+                targets: '#wheel',
+                rotate: randomAngle,
+                duration: 3000,
+                easing: 'easeOutQuad',
+                complete: () => {
+                    const normalizedAngle = randomAngle % 360;
+                    const segmentAngle = 360 / segments;
+                    const selectedSegmentIndex = Math.floor((360 - normalizedAngle) / segmentAngle) % segments;
+                    const selectedSegment = segmentLabels[selectedSegmentIndex];
+                    let taskId = selectedSegment;
+                    if (selectedSegment === "Spin Again") taskId = 6;
+                    if (selectedSegment === "Spin Twice") taskId = 14;
+                    handleSpinResult(taskId, selectedSegmentIndex);
+                    isSpinning = false;
+                    document.getElementById('spinButton').disabled = false;
+                }
+            });
+        });
+
+        function handleSpinResult(segment, segmentIndex) {
+            const task = tasks.find(t => t.id === segment);
+            showResult(task);
+
+            if (task.text.includes('Spin Again!')) {
+                setTimeout(() => document.getElementById('spinButton').click(), 2000);
+                return;
+            }
+            if (task.text.includes('Spin Twice Again!')) {
+                setTimeout(() => {
+                    document.getElementById('spinButton').click();
+                    setTimeout(() => document.getElementById('spinButton').click(), 4000);
+                }, 2000);
+                return;
+            }
+            if (task.text.includes('Skip this question!')) {
+                return;
+            }
+
+            // Replace task
+            usedTasks.push(task);
+            currentTasks = currentTasks.filter(t => t.id !== task.id);
+            if (tasks.length > 0) {
+                const availableTasks = tasks.filter(t => !currentTasks.includes(t) && !usedTasks.includes(t));
+                if (availableTasks.length === 0) {
+                    tasks.push(...usedTasks);
+                    usedTasks = [];
+                }
+                const newTask = tasks.filter(t => !currentTasks.includes(t) && !usedTasks.includes(t))[0];
+                if (newTask) {
+                    currentTasks.push(newTask);
+                }
+            }
+        }
+
+        function showResult(task) {
+            const resultDisplay = document.getElementById('resultDisplay');
+            const resultText = document.getElementById('resultText');
+            resultText.textContent = `${task.text} ${task.emoji}`;
+            resultDisplay.classList.remove('hidden');
+
+            anime({
+                targets: '#resultText',
+                scale: [0, 1],
+                rotate: '1turn',
+                duration: 1000,
+                easing: 'easeOutElastic(1, .5)',
+                complete: () => {
+                    setTimeout(() => {
+                        anime({
+                            targets: '#resultText',
+                            scale: 0,
+                            duration: 500,
+                            easing: 'easeInBack',
+                            complete: () => {
+                                resultDisplay.classList.add('hidden');
+                            }
+                        });
+                    }, 2000);
+                }
+            });
+        }
+
+        // Arc Path Generator
+        function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
+            const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
+            return {
+                x: centerX + (radius * Math.cos(angleInRadians)),
+                y: centerY + (radius * Math.sin(angleInRadians))
+            };
+        }
+
+        function describeArc(x, y, radius, startAngle, endAngle) {
+            const start = polarToCartesian(x, y, radius, endAngle);
+            const end = polarToCartesian(x, y, radius, startAngle);
+            const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+            return [
+                "M", start.x, start.y,
+                "A", radius, radius, 0, largeArcFlag, 0, end.x, end.y,
+                "L", x, y,
+                "Z"
+            ].join(" ");
+        }
+    </script>
+</body>
+</html>
